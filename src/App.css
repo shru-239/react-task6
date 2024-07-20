@@ -1,0 +1,84 @@
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+  margin: 0;
+  padding: 0;
+}
+
+.auth-container, .todo-container, .task-container {
+  max-width: 500px;
+  margin: 50px auto;
+  padding: 20px;
+  background: white;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+.auth-form, .list-form, .task-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-form input, .list-form input, .task-form input, .task-form select {
+  margin-bottom: 10px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.auth-form button, .list-form button, .task-form button {
+  padding: 10px;
+  border: none;
+  background: #007bff;
+  color: white;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.auth-form button:hover, .list-form button:hover, .task-form button:hover {
+  background: #0056b3;
+}
+/* src/App.css */
+
+.list-container {
+  display: flex;
+  overflow-x: auto;
+  padding: 10px;
+  gap: 10px;
+}
+
+.list {
+  background-color: #f4f4f4;
+  padding: 10px;
+  border-radius: 4px;
+  width: 300px;
+  min-height: 400px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.task-container {
+  padding: 10px;
+  min-height: 200px;
+}
+
+.task {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.task-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.task-content h4 {
+  margin: 0;
+}
+
+.task-content p {
+  margin: 5px 0;
+}
