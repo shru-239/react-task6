@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { DragDropContext, Droppable } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { useAuth } from './AuthContext';
 import { db } from './firebase';
 import { collection, addDoc, updateDoc, doc, onSnapshot, query, where } from 'firebase/firestore';
-import Task from './Task';
 import './App.css';
 
 const ToDoList = () => {
@@ -39,9 +38,9 @@ const ToDoList = () => {
   };
 
   const handleAddTask = async (listId) => {
-    if (newTask.title.trim() === '') return;
+    if (newTask.title.trim() === '' || newTask.priority.trim() === '') return;
     const listRef = doc(db, 'lists', listId);
-    const updatedTasks = [...lists.find(list => list.id === listId).tasks, { ...newTask, id: Date.now() }];
+    const updatedTasks = [...lists.find(list => list.id === listId).tasks, { ...newTask, id: Date.now().toString() }];
     await updateDoc(listRef, { tasks: updatedTasks });
     setNewTask({ title: '', description: '', dueDate: '', priority: '' });
   };
@@ -51,46 +50,28 @@ const ToDoList = () => {
     if (!destination) return;
 
     const sourceListId = source.droppableId.split('-')[0];
-    const sourcePriority = source.droppableId.split('-')[1];
     const destListId = destination.droppableId.split('-')[0];
     const destPriority = destination.droppableId.split('-')[1];
 
     const sourceList = lists.find(list => list.id === sourceListId);
     const destList = lists.find(list => list.id === destListId);
 
-    // Moving within the same list
     if (sourceListId === destListId) {
       const updatedTasks = Array.from(sourceList.tasks);
       const [movedTask] = updatedTasks.splice(source.index, 1);
-      movedTask.priority = destPriority; // Update priority if changed
+      movedTask.priority = destPriority;
       updatedTasks.splice(destination.index, 0, movedTask);
       await updateDoc(doc(db, 'lists', sourceListId), { tasks: updatedTasks });
     } else {
-      // Moving between different lists
-      const sourceTasks = sourceList.tasks.filter(task => task.priority === sourcePriority);
-      const destTasks = destList.tasks.filter(task => task.priority === destPriority);
+      const sourceTasks = Array.from(sourceList.tasks);
+      const destTasks = Array.from(destList.tasks);
 
       const [movedTask] = sourceTasks.splice(source.index, 1);
-      movedTask.priority = destPriority; // Update priority in new list
-
+      movedTask.priority = destPriority;
       destTasks.splice(destination.index, 0, movedTask);
 
-      const newSourceTasks = sourceList.tasks.map(task => {
-        if (task.priority === sourcePriority) {
-          return sourceTasks.shift() || task;
-        }
-        return task;
-      });
-
-      const newDestTasks = destList.tasks.map(task => {
-        if (task.priority === destPriority) {
-          return destTasks.shift() || task;
-        }
-        return task;
-      });
-
-      await updateDoc(doc(db, 'lists', sourceListId), { tasks: newSourceTasks });
-      await updateDoc(doc(db, 'lists', destListId), { tasks: newDestTasks });
+      await updateDoc(doc(db, 'lists', sourceListId), { tasks: sourceTasks });
+      await updateDoc(doc(db, 'lists', destListId), { tasks: destTasks });
     }
   };
 
@@ -109,50 +90,73 @@ const ToDoList = () => {
       </div>
       <DragDropContext onDragEnd={onDragEnd}>
         {lists.map(list => (
-          <Droppable key={list.id} droppableId={`${list.id}-Low`} type="TASK">
-            {(provided) => (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className="todo-list"
+          <div key={list.id} className="todo-list">
+            <h3>{list.name}</h3>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              handleAddTask(list.id);
+            }}>
+              <input
+                type="text"
+                value={newTask.title}
+                onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                placeholder="Task title"
+              />
+              <input
+                type="text"
+                value={newTask.description}
+                onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+                placeholder="Task description"
+              />
+              <input
+                type="date"
+                value={newTask.dueDate}
+                onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
+              />
+              <select
+                value={newTask.priority}
+                onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })}
               >
-                <h3>{list.name}</h3>
-                <Task listId={list.id} />
-                <form onSubmit={(e) => {
-                  e.preventDefault();
-                  handleAddTask(list.id);
-                }}>
-                  <input
-                    type="text"
-                    value={newTask.title}
-                    onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-                    placeholder="Task title"
-                  />
-                  <input
-                    type="text"
-                    value={newTask.description}
-                    onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-                    placeholder="Task description"
-                  />
-                  <input
-                    type="date"
-                    value={newTask.dueDate}
-                    onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
-                  />
-                  <select
-                    value={newTask.priority}
-                    onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })}
+                <option value="">Priority</option>
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+              </select>
+              <button type="submit">Add Task</button>
+            </form>
+            {['Low', 'Medium', 'High'].map(priority => (
+              <Droppable key={`${list.id}-${priority}`} droppableId={`${list.id}-${priority}`} type="TASK">
+                {(provided) => (
+                  <div
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                    className={`priority-block ${priority.toLowerCase()}`}
                   >
-                    <option value="">Priority</option>
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
-                  </select>
-                  <button type="submit">Add Task</button>
-                </form>
-              </div>
-            )}
-          </Droppable>
+                    <h4>{priority}</h4>
+                    {list.tasks
+                      .filter(task => task.priority === priority)
+                      .map((task, index) => (
+                        <Draggable key={task.id} draggableId={task.id.toString()} index={index}>
+                          {(provided) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              className="task-card"
+                            >
+                              <h5>{task.title}</h5>
+                              <p>{task.description}</p>
+                              <p>{task.dueDate}</p>
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            ))}
+          </div>
         ))}
       </DragDropContext>
     </div>
