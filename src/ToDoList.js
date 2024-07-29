@@ -144,9 +144,9 @@ const ToDoList = () => {
                               {...provided.dragHandleProps}
                               className="task-card"
                             >
-                              <h5>{task.title}</h5>
-                              <p>{task.description}</p>
-                              <p>{task.dueDate}</p>
+                              <h5>Task Title:- {task.title}</h5>
+                              <p>Description:- {task.description}</p>
+                              <p>Due Date:- {task.dueDate}</p>
                             </div>
                           )}
                         </Draggable>
