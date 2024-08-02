@@ -1,54 +1,50 @@
-// src/SignUp.js
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { db } from './firebase';
+import { collection, addDoc } from 'firebase/firestore';
+import axios from 'axios';
+import moment from 'moment-timezone';
+import './App.css';
 
 const SignUp = () => {
-  const emailRef = useRef();
-  const passwordRef = useRef();
-  const passwordConfirmRef = useRef();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const { signup } = useAuth();
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  async function handleSubmit(e) {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (passwordRef.current.value !== passwordConfirmRef.current.value) {
-      return setError('Passwords do not match');
-    }
-
     try {
-      setError('');
-      setLoading(true);
-      await signup(emailRef.current.value, passwordRef.current.value);
-      navigate('/');
-    } catch {
-      setError('Failed to create an account');
-    }
+      const userCredential = await signup(email, password);
+      const user = userCredential.user;
 
-    setLoading(false);
-  }
+      const ipResponse = await axios.get('https://api.ipify.org?format=json');
+      const ip = ipResponse.data.ip;
+
+      const signupTime = moment().tz("Asia/Kolkata").format('YYYY-MM-DD HH:mm:ss');
+
+      await addDoc(collection(db, 'users'), {
+        email: user.email,
+        password, // Store securely in a real app
+        signupTime,
+        ip,
+      });
+
+      navigate('/');
+    } catch (error) {
+      console.error('Error signing up:', error);
+    }
+  };
 
   return (
     <div>
-      <h2>Sign Up</h2>
-      {error && <alert>{error}</alert>}
       <form onSubmit={handleSubmit}>
-        <label>Email</label>
-        <input type="email" ref={emailRef} required />
-        <label>Password</label>
-        <input type="password" ref={passwordRef} required />
-        <label>Password Confirmation</label>
-        <input type="password" ref={passwordConfirmRef} required />
-        <button disabled={loading} type="submit">
-          Sign Up
-        </button>
+        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" required />
+        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" required />
+        <button type="submit">Sign Up</button>
       </form>
-      <div>
-        Already have an account? <Link to="/login">Log In</Link>
-      </div>
+      <p>Already have an account? <a href="/login">Log In</a></p>
     </div>
   );
 };

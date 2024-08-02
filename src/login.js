@@ -1,47 +1,53 @@
-// src/Login.js
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { db } from './firebase';
+import { collection, doc, setDoc, getDoc } from 'firebase/firestore';
+import axios from 'axios';
+import moment from 'moment-timezone';
+import './App.css';
 
 const Login = () => {
-  const emailRef = useRef();
-  const passwordRef = useRef();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const { login } = useAuth();
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  async function handleSubmit(e) {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
-      setError('');
-      setLoading(true);
-      await login(emailRef.current.value, passwordRef.current.value);
-      navigate('/');
-    } catch {
-      setError('Failed to log in');
-    }
+      const userCredential = await login(email, password);
+      const user = userCredential.user;
 
-    setLoading(false);
-  }
+      const ipResponse = await axios.get('https://api.ipify.org?format=json');
+      const ip = ipResponse.data.ip;
+
+      const lastLogin = moment().tz("Asia/Kolkata").format('YYYY-MM-DD HH:mm:ss');
+
+      const userRef = doc(collection(db, 'users'), user.uid);
+      const userDoc = await getDoc(userRef);
+
+      if (userDoc.exists()) {
+        await setDoc(userRef, {
+          lastLogin,
+          ip,
+        }, { merge: true });
+      }
+
+      navigate('/');
+    } catch (error) {
+      console.error('Error logging in:', error);
+    }
+  };
 
   return (
     <div>
-      <h2>Log In</h2>
-      {error && <alert>{error}</alert>}
       <form onSubmit={handleSubmit}>
-        <label>Email</label>
-        <input type="email" ref={emailRef} required />
-        <label>Password</label>
-        <input type="password" ref={passwordRef} required />
-        <button disabled={loading} type="submit">
-          Log In
-        </button>
+        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" required />
+        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" required />
+        <button type="submit">Log In</button>
       </form>
-      <div>
-        Need an account? <Link to="/signup">Sign Up</Link>
-      </div>
+      <p>Don't have an account? <a href="/signup">Sign Up</a></p>
     </div>
   );
 };

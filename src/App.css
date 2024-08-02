@@ -48,3 +48,51 @@
   background-color: #f44336;
   color: black;
 }
+.menu {
+  margin-bottom: 20px;
+}
+
+.menu button {
+  margin-right: 10px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.menu button:hover {
+  background-color: #f0f0f0;
+}
+
+.content {
+  margin-top: 20px;
+}
+
+.content ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.content li {
+  margin-bottom: 15px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+.admin-grid {
+  padding: 20px;
+}
+
+.admin-grid table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-grid th, .admin-grid td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.admin-grid th {
+  background-color: #f2f2f2;
+}

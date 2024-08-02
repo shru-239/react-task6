@@ -1,10 +1,11 @@
-// src/App.js
+// App.js
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './AuthContext';
 import SignUp from './signup';
 import Login from './login';
 import ToDoList from './ToDoList';
+import AdminDashboard from './AdminDashboard';
 import './App.css';
 
 const PrivateRoute = ({ children }) => {
@@ -12,25 +13,19 @@ const PrivateRoute = ({ children }) => {
   return currentUser ? children : <Navigate to="/login" />;
 };
 
-const App = () => {
+function App() {
   return (
-    <AuthProvider>
-      <Router>
+    <Router>
+      <AuthProvider>
         <Routes>
           <Route path="/signup" element={<SignUp />} />
           <Route path="/login" element={<Login />} />
-          <Route
-            path="/"
-            element={
-              <PrivateRoute>
-                <ToDoList />
-              </PrivateRoute>
-            }
-          />
+          <Route path="/" element={<PrivateRoute><ToDoList /></PrivateRoute>} />
+          <Route path="/admin/*" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
         </Routes>
-      </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </Router>
   );
-};
+}
 
 export default App;
